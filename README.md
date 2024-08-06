@@ -21,7 +21,8 @@ pip install -r requirements.txt
 
 ### 2. `.env` 파일 설정
 - `.env.example` 파일 복제 후 `.env` 파일 생성
-- `TESTER_ID`와 `TESTER_PW`에 본인이 로그인할 아이디, 패스워드 입력
+- (Optional)`TESTER_ID`와 `TESTER_PW`에 본인이 로그인할 아이디, 패스워드 입력
+  -   login 기능 해제한 경우 이 과정 생략
 - 그 외 key 값은 개별 문의
 
 ### 3. 데이터베이스 설정
