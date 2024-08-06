@@ -31,7 +31,7 @@ pip install -r requirements.txt
 - `chainlit run app.py` 실행 후 `localhost:8000`으로 열리는지 확인
 - `.env`파일에서 작성한 아이디와 패스워드로 로그인
 
-### 추가 (Optional)
+### + 추가 (Optional)
 - 실행했을 때 로그인 화면이 뜨는 경우
   1. `.env`파일에서 `TESTER_ID`와 `TESTER_PW`에 본인이 로그인할 아이디, 패스워드 입력
   2. Google 로그인 버튼이 있는 경우, Google 계정으로 로그인
