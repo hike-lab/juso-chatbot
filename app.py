@@ -10,6 +10,7 @@ from langchain_openai import ChatOpenAI
 from langchain.schema import ChatMessage, AIMessage, HumanMessage, SystemMessage
 # from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 ## ChromaDB
 import chromadb
 # from langchain.vectorstores import Chroma
@@ -34,11 +35,17 @@ from typing import Dict, Optional
 ## literaliteral_client
 from literalai import LiteralClient
 
+
+if __name__ == "__main__":
+    from chainlit.cli import run_chainlit
+    run_chainlit(__file__)
+
+
 # .env 파일 활성화 & API KEY 설정
-load_dotenv()
+load_dotenv(override=True)
 openai_api_key = os.getenv('OPENAI_API_KEY')
 
-logging.langsmith("240731") 
+logging.langsmith("hike-jusochatbot-demo") 
 
 literal_client = LiteralClient(api_key=os.getenv("LITERAL_API_KEY"))
 literal_client.instrument_openai()
@@ -50,20 +57,55 @@ literal_client.instrument_openai()
 admin_id = os.getenv("ADMIN_ID")
 admin_pw = os.getenv("ADMIN_PW")
 
-@cl.password_auth_callback
-def auth_callback(username: str, password: str):
-    # Fetch the user matching username from your database
-    # and compare the hashed password with the value stored in the database
-    if (username, password) == (admin_id, admin_pw):
-        return cl.User(
-            identifier="admin", metadata={"role": "admin", "provider": "credentials"}
-        )
-    elif (username, password) == ('personalID', 'personalPW'):
-        return cl.User(
-            identifier="personalID", metadata={"role": "user", "provider": "credentials"}
-        )
-    else:
-        return None
+tester_id = os.getenv("TESTER_ID")
+tester_pw = os.getenv("TESTER_PW")
+
+# @cl.password_auth_callback
+# def auth_callback(username: str, password: str):
+#     # Fetch the user matching username from your database
+#     # and compare the hashed password with the value stored in the database
+#     if (username, password) == (admin_id, admin_pw):
+#         return cl.User(
+#             identifier="admin", metadata={"role": "admin", "provider": "credentials"}
+#         )
+#     elif (username, password) == ('tester', 'tester'):
+#         return cl.User(
+#             identifier="tester", metadata={"role": "user", "provider": "credentials"}
+#         )
+#     elif (username, password) == ('haklaekim', 'haklaekim'):
+#         return cl.User(
+#             identifier="haklaekim", metadata={"role": "user", "provider": "credentials"}
+#         )
+#     elif (username, password) == ('jeongyunlee', 'jeongyunlee'):
+#         return cl.User(
+#             identifier="jeongyunlee", metadata={"role": "user", "provider": "credentials"}
+#         )
+#     elif (username, password) == ('harampark', 'harampark'):
+#         return cl.User(
+#             identifier="harampark", metadata={"role": "user", "provider": "credentials"}
+#         )
+#     elif (username, password) == ('chaeeunsong', 'chaeeunsong'):
+#         return cl.User(
+#             identifier="chaeeunsong", metadata={"role": "user", "provider": "credentials"}
+#         )
+#     elif (username, password) == ('jieunahn', 'jieunahn'):
+#         return cl.User(
+#             identifier="jieunahn", metadata={"role": "user", "provider": "credentials"}
+#         )
+#     elif (username, password) == ('yejunpark', 'yejunpark'):
+#         return cl.User(
+#             identifier="yejunpark", metadata={"role": "user", "provider": "credentials"}
+#         )
+#     elif (username, password) == ('eunhyechoi', 'eunhyechoi'):
+#         return cl.User(
+#             identifier="eunhyechoi", metadata={"role": "user", "provider": "credentials"}
+#         )
+#     elif (username, password) == ('youngkyukim', 'youngkyukim'):
+#         return cl.User(
+#             identifier="youngkyukim", metadata={"role": "user", "provider": "credentials"}
+#         )
+#     else:
+#         return None
     
 # @cl.oauth_callback
 # def oauth_callback(
@@ -76,6 +118,7 @@ def auth_callback(username: str, password: str):
 
 @cl.set_starters
 async def set_starters():
+
     return [
         cl.Starter(
             label="도로명주소의 정의를 알려줘",
@@ -237,9 +280,14 @@ def llm_answer(state: GraphState) -> GraphState:
                 Context의 정보로 답변을 생성할 수 있는 경우 해당 정보를 활용하고, 만약 Context의 정보로 답변을 유추조차 할 수 없는 경우, Context를 참고하지 말고 잘 모르겠다고 답변해줘.
                 답변에는 Context라는 단어를 사용하지 말아줘.
                 
-                만약 Context의 정보를 활용한다면, 출처를 알 수 있는 경우 출처(data/final, data/csv 등 뒤에 있는 파일명 혹은 'http:', 'https' 등으로 시작하는 url)를 마지막에 넣어줘. 하지만 잘 모르겠다면 빼도 돼. 
+                만약 Context의 정보를 활용한다면, 출처를 알 수 있는 경우 출처(data/final, data/csv 등) 뒤에 있는 파일명을 적어주거나 '- url:' 뒤에서 'http:', 'https' 등으로 시작하는 url 주소 전체를 마지막에 넣어줘. 하지만 잘 모르겠다면 빼도 돼. 
                 파일명을 출처로 작성한다면 'data/final', 'data/csv' 와 같은 경로명이나 .csv, .docx, .pdf, .txt 등 파일 경로와 확장자는 제거해줘. 
-
+                파일명에 'chapter'가 포함된다면, 앞에 '주소 데이터 활용 설명서-'를 붙여줘.
+                
+                출처 기입 형식은 '(출처: )' 이렇게 써줘. 예시는 다음과 같아.
+                
+                1. (출처: 도로명주소법, 주소 데이터 활용 설명서-chapter3-2)
+                2. (출처: https://www.juso.go.kr/CommonPageLink.do?link=/street/GuideBook, https://www.gov.kr/main?a=AA020InfoCappViewApp&HighCtgCD=&CappBizCD=15000000098)
                 #Previous Chat History:
                 {chat_history}
 
@@ -440,25 +488,36 @@ app = workflow.compile(checkpointer=memory)
 
 @cl.on_message
 async def run_convo(message: cl.Message):
+    async with cl.Step(name="langgraph", type="llm") as step:
+        step.input = message.content
+        
+        config = RunnableConfig(
+            recursion_limit=20, configurable={"thread_id": "CORRECTIVE-SEARCH-RAG"}
+        )
 
-    
-    config = RunnableConfig(
-        recursion_limit=20, configurable={"thread_id": "CORRECTIVE-SEARCH-RAG"}
-    )
+        inputs = GraphState(
+            question=message.content
+        )
 
-    inputs = GraphState(
-        question=message.content
-    )
+        try:
+            # answer = app.invoke(inputs, config=config)
+            # print(answer)
+            # answer_text = answer['answer']
+            
+            answer = app.stream(inputs, config=config)
+            final_answer = list(answer)
+            
+            if 'general_llm' in final_answer[-1]:
+                answer_text = final_answer[-1]['general_llm']['answer']
+            elif 'llm_answer' in final_answer[-1]:
+                answer_text = final_answer[-1]['llm_answer']['answer']
 
+        except GraphRecursionError as e:
+            print(f"Recursion limit reached: {e}")
+            answer_text = "죄송합니다. 해당 질문에 대해서는 답변할 수 없습니다."
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            answer_text = "죄송합니다. 처리 중 오류가 발생했습니다."
 
-    try:
-        answer = app.invoke(inputs, config=config)
-        answer_text = answer['answer']
-    except GraphRecursionError as e:
-        print(f"Recursion limit reached: {e}")
-        answer_text = "죄송합니다. 해당 질문에 대해서는 답변할 수 없습니다."
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        answer_text = "죄송합니다. 처리 중 오류가 발생했습니다."
-
+        step.output = final_answer
     await cl.Message(content=answer_text).send()
